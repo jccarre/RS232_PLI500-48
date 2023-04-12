@@ -18,9 +18,9 @@ def calculate_crc(string):
 def envoyerCommande(commande):
     """Envoie la commande (en ajoutant la parenthèse, le CRC et le retour à la ligne.
     Renvoie La réponse de la part du PLI"""
-    with serial.serial_for_url(port= "COM6", baudrate=2400,timeout=1) as s:
-        print(s.name + 'is open…')
-        print(s.get_settings())  # Grace a ces 3 lignes lorsque le Port est ouvert c’est indiqué dans le LOG
+    with serial.Serial('/dev/ttyUSB0', baudrate=2400, timeout=1) as s:
+        print(s.name + ' is open…')
+        print("Paramètres de la communication : ", s.get_settings())  # Grace a ces 3 lignes lorsque le Port est ouvert c’est indiqué dans le LOG
         crc = calculate_crc(commande)
         s.write(commande.encode('utf-8'))
         s.write(crc)
@@ -29,4 +29,8 @@ def envoyerCommande(commande):
 
 def requete_statuts():
     reponse = envoyerCommande("QFLAG")
-    
+    return reponse
+
+r = requete_statuts()
+print(r)
+print("fin d'exécution")
