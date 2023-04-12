@@ -23,6 +23,9 @@ def envoyerCommande(commande):
         print("Paramètres de la communication : ", s.get_settings())  # Grace a ces 3 lignes lorsque le Port est ouvert c’est indiqué dans le LOG
         crc = calculate_crc(commande)
         s.write(commande.encode('utf-8'))
+        #bytes_crc = crc.to_bytes(2, 'big')  #La méthode de calcul du crc proposé par Steca renvoie un CRC sur 16 bit. 
+        #for b in bytes_crc:                 #Si jamais on est obligé d'envoyer chaque bit séparément, on peut faire comme ça.
+        #    s.write(b)
         s.write(crc)
         s.write('\n')
         return s.readline()
