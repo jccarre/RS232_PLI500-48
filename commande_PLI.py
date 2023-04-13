@@ -1,5 +1,7 @@
 import ctypes #Pour l'appel de la fonction C permettant de calculer le CRC des messages.
 import serial #Importation de la bibliothèque « pySerial »
+from datetime import datetime
+from datetime import date
 
 # Load the shared library containing the cal_crc_half function
 lib = ctypes.cdll.LoadLibrary("./calcul_CRC.so")
@@ -7,6 +9,13 @@ lib = ctypes.cdll.LoadLibrary("./calcul_CRC.so")
 # Define the argument and return types of the cal_crc_half function
 lib.cal_crc_half.argtypes = (ctypes.POINTER(ctypes.c_char), ctypes.c_uint)
 lib.cal_crc_half.restype = ctypes.c_uint16
+
+def log(message, dossier = "log"):
+    nom_fichier = date.today().strftime("%b-%d-%Y")
+    with open(nom_fichier, 'w', encoding='utf-8') as f:
+        now = datetime.now()
+        dt_string = now.strftime("%H:%M:%S")
+        f.write(dt_string + ";" + message + "\n")
 
 def calculate_crc(string):
     # Convert the Python string to a C-style char array
@@ -28,8 +37,10 @@ def envoyerCommande(commande):
         #    s.write(b)
         s.write(crc)
         s.write('\n')
-        return s.readline()
-
+        retour = s.readline()
+        log("commande : " + commande + "; resultat = " + retour)
+        return retour
+    
 def requete_statuts():
     reponse = envoyerCommande("QFLAG")
     return reponse
