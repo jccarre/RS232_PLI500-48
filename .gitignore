@@ -27,6 +27,7 @@
 *.so
 *.so.*
 *.dylib
+calcul_CRC.so
 
 # Executables
 *.exe
@@ -50,3 +51,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+log
+testSerial.py
+simulateur_PLI.ino
