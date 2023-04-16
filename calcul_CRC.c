@@ -5,7 +5,6 @@ typedef unsigned char INT8U;
 typedef unsigned short INT16U;
 
 INT16U cal_crc_half(INT8U *pin, INT8U len);
-int16_t calcul_CRC(char *str);
 
 int main()
 {
@@ -19,20 +18,6 @@ int main()
     return 0;
 }
 
-/*int16_t calcul_CRC(char *str){
-    printf("chaine à calculer : %s\n", str);
-    l = strlen(str) 
-    char tableau [l + 1];
-    for(int i = 0; i < l; i++){
-        tableau[i] = str[i]
-    }
-    printf("CRC direct avec l   : %u\n", cal_crc_half(*str, l))
-    printf("CRC copié  avec l   : %u\n", cal_crc_half(*tableau, l))
-    printf("CRC direct avec l+1 : %u\n", cal_crc_half(*str, l+1))
-    printf("CRC copié  avec l+1 : %u\n", cal_crc_half(*tableau, l+1))
-    char *ptr = tableau;
-    return cal_crc_half(ptr, l)
-}*/
 
 INT16U cal_crc_half(INT8U *pin, INT8U len){
     INT16U crc;
