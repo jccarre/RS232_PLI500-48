@@ -56,14 +56,71 @@ def requete_statuts():
 def request_rating_informations():
     reponse = envoyerCommande("QPIRI")
     reponse = str(reponse)
-    data = reponse[1:-3].split(" ")
+    data = reponse[3:-5].split(" ")
     dictionnaire = {}
-    noms = ["Grid rating voltage", "Grid rating current", "AC output rating voltage", "AC output rating frequency", "AC output rating current", "AC output rating apparent power", "AC output rating active power", "Battery rating voltage", "Battery re-charge voltage", "Battery under voltage", "Battery bulk voltage", "Battery float voltage", "Battery type", "Current max AC charging", "Current max charging current", "Input voltage range", "Output source priority", "Charger source priority", "Parallel max number", "Machine type", "Topology", "Output mode", "Battery re-discharge voltage", "PV 'OK' condition for parallel devices", "PV power balance", "Max charging time at boost stage"]
+    noms = ["Grid rating voltage",
+            "Grid rating current",
+            "AC output rating voltage",
+            "AC output rating frequency",
+            "AC output rating current",
+            "AC output rating apparent power",
+            "AC output rating active power",
+            "Battery rating voltage",
+            "Battery re-charge voltage",
+            "Battery under voltage",
+            "Battery bulk voltage",
+            "Battery float voltage",
+            "Battery type",
+            "Current max AC charging",
+            "Current max charging current",
+            "Input voltage range",
+            "Output source priority",
+            "Charger source priority",
+            "Parallel max number",
+            "Machine type",
+            "Topology",
+            "Output mode",
+            "Battery re-discharge voltage",
+            "PV 'OK' condition for parallel devices",
+            "PV power balance",
+            "Max charging time at boost stage"]
     units = ["V", "A", "V", "Hz", "A", "VA", "W", "V", "V", "V", "V", "V", "", "A", "A", "", "", "", "", "", "", "", "", "", "", ""]
     for i in range(len(data)):
         dictionnaire[noms[i]] = (data[i], [units[i]])
         print(noms[i] + " : " + data[i] + " " + units[i])
-    return reponse
+    return reponse, dictionnaire
+
+def request_general_status_parameter():
+    reponse = envoyerCommande("QPIGS")
+    reponse = str(reponse)
+    data = reponse[3:-5].split(" ")
+    dictionnaire = {}
+    noms = ["Grid voltage",
+            "Grid frequency",
+            "AC output voltage",
+            "AC output frequency",
+            "AC output apparent power",
+            "AC output active power",
+            "Output load percent",
+            "Internal bus voltage",
+            "Battery voltage measured by inverter",
+            "Battery charging current",
+            "Battery capacity (approximate SOC)",
+            "Inverter heat sink temperature",
+            "PV battery charging current (measured on battery side)",
+            "PV input voltage",
+            "Battery voltage measured by solar charge controller",
+            "Battery discharge current",
+            "device status",
+            "Battery voltage offset for fans on",
+            "EEPROM version",
+            "PV charging power",
+            "Device status"]
+    units = ["V", "Hz", "V", "Hz", "VA", "W", "%", "V", "V", "A", "%", "°C", "A", "V", "V", "A", "", "10mV", "", "W", ""]
+    for i in range(len(data)):
+        dictionnaire[noms[i]] = (data[i], [units[i]])
+        print(noms[i] + " : " + data[i] + " " + units[i])
+    return reponse, dictionnaire
 
 #r = requete_statuts()
 r = request_rating_informations()
