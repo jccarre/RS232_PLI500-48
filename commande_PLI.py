@@ -34,7 +34,7 @@ def envoyerCommande(commande):
     """Envoie la commande (en ajoutant la parenthèse, le CRC et le retour à la ligne.
     Renvoie La réponse de la part du PLI"""
     with serial.Serial(COM_port_name, baudrate=2400, timeout=1) as s:
-        sleep(2)#nécessaire pour laisser le temps à la communication série de s'ouvrir.
+        sleep(0.5)#nécessaire pour laisser le temps à la communication série de s'ouvrir.
         #print(s.name + ' is open…')
         #print("Paramètres de la communication : ", s.get_settings())  # Grace a ces 3 lignes lorsque le Port est ouvert c’est indiqué dans le LOG
         crc = calculate_crc(commande)
@@ -55,7 +55,7 @@ def requete_statuts():
 
 def request_rating_informations():
     reponse = envoyerCommande("QPIRI")
-    data = reponse.split(" ")
+    #data = reponse.split(" ")
     dictionnaire = {}
     noms = ["Grid rating voltage",
             "Grid rating current",
@@ -83,15 +83,15 @@ def request_rating_informations():
             "PV 'OK' condition for parallel devices",
             "PV power balance",
             "Max charging time at boost stage"]
-    units = ["V", "A", "V", "Hz", "A", "VA", "W", "V", "V", "V", "V", "V", "", "A", "A", "", "", "", "", "", "", "", "", "", "", ""]
-    for i in range(len(data)):
-        dictionnaire[noms[i]] = (data[i], [units[i]])
-        print(noms[i] + " : " + data[i] + " " + units[i])
+    #units = ["V", "A", "V", "Hz", "A", "VA", "W", "V", "V", "V", "V", "V", "", "A", "A", "", "", "", "", "", "", "", "", "", "", ""]
+    #for i in range(len(data)):
+        #dictionnaire[noms[i]] = (data[i], [units[i]])
+        #print(noms[i] + " : " + data[i] + " " + units[i])
     return reponse, dictionnaire
 
 def request_general_status_parameter():
     reponse = envoyerCommande("QPIGS")
-    data = reponse.split(" ")
+    #data = reponse.split(" ")
     dictionnaire = {}
     noms = ["Grid voltage",
             "Grid frequency",
@@ -114,10 +114,10 @@ def request_general_status_parameter():
             "EEPROM version",
             "PV charging power",
             "Device status"]
-    units = ["V", "Hz", "V", "Hz", "VA", "W", "%", "V", "V", "A", "%", "°C", "A", "V", "V", "A", "", "10mV", "", "W", ""]
-    for i in range(len(data)):
-        dictionnaire[noms[i]] = (data[i], [units[i]])
-        print(noms[i] + " : " + data[i] + " " + units[i])
+    #units = ["V", "Hz", "V", "Hz", "VA", "W", "%", "V", "V", "A", "%", "°C", "A", "V", "V", "A", "", "10mV", "", "W", ""]
+    #for i in range(len(data)):
+    #    dictionnaire[noms[i]] = (data[i], [units[i]])
+    #    print(noms[i] + " : " + data[i] + " " + units[i])
     return reponse, dictionnaire
 
 def request_mode():
@@ -134,7 +134,7 @@ for i in range(10):
     status_param = request_general_status_parameter()
     mode = request_mode()
     warnings_faults = request_warning_and_faults()
-    msg = statuts + status_param[0] + mode + warnings_faults
+    msg = statuts + ";" + status_param[0] + ";" + mode  + ";" + warnings_faults
     log(msg, "log")
     sleep(10)
 
