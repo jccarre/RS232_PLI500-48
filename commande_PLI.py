@@ -30,15 +30,16 @@ def calculate_crc(string):
     # Call the cal_crc_half function and return the result
     return lib.cal_crc_half(c_string, len(string)+1)
 
-def envoyerCommande(commande):
+def envoyerCommande(commande, crc = False):
     """Envoie la commande (en ajoutant la parenthèse, le CRC et le retour à la ligne.
     Renvoie La réponse de la part du PLI"""
     with serial.Serial(COM_port_name, baudrate=2400, timeout=1) as s:
         sleep(0.5)#nécessaire pour laisser le temps à la communication série de s'ouvrir.
         #print(s.name + ' is open…')
         #print("Paramètres de la communication : ", s.get_settings())  # Grace a ces 3 lignes lorsque le Port est ouvert c’est indiqué dans le LOG
-        crc = calculate_crc(commande)
-        print("CRC : ", crc)
+        if not crc: #Pour les commandes classiques, on connait déjà le CRC car il ne change pas. Donc pas besoin de le recalculer à chaque fois.
+            crc = calculate_crc(commande)
+            print("CRC : ", crc)
         s.write(bytes(commande, 'utf-8'))
         bytes_crc = crc.to_bytes(2, 'big')  #La méthode de calcul du crc proposé par Steca renvoie un CRC sur 16 bit.
         values = bytearray(bytes_crc)
@@ -50,7 +51,7 @@ def envoyerCommande(commande):
         return retour
     
 def requete_statuts():
-    reponse = envoyerCommande("QFLAG")
+    reponse = envoyerCommande("QFLAG", 39028)
     return str(reponse)
 
 def request_rating_informations():
@@ -90,7 +91,7 @@ def request_rating_informations():
     return reponse, dictionnaire
 
 def request_general_status_parameter():
-    reponse = envoyerCommande("QPIGS")
+    reponse = envoyerCommande("QPIGS",47017)
     #data = reponse.split(" ")
     dictionnaire = {}
     noms = ["Grid voltage",
@@ -121,22 +122,22 @@ def request_general_status_parameter():
     return reponse, dictionnaire
 
 def request_mode():
-    return envoyerCommande("QMOD")
+    return envoyerCommande("QMOD", 18881)
 
 
 def request_warning_and_faults():
-    return envoyerCommande("QPIWS")
+    return envoyerCommande("QPIWS", 46298)
 
-for i in range(10):
-    print("Passage n°" + str(i))
-    statuts = requete_statuts()
+while True:
+    #statuts = requete_statuts()
     #r = request_rating_informations()
     status_param = request_general_status_parameter()
     mode = request_mode()
     warnings_faults = request_warning_and_faults()
-    msg = statuts + ";" + status_param[0] + ";" + mode  + ";" + warnings_faults
+    msg = status_param[0] + ";" + mode + ";" + warnings_faults
     log(msg, "log")
-    sleep(10)
+    print(msg)
+    sleep(30)
 
 #print(r)
 #print("fin d'exécution")
