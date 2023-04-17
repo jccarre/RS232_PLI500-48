@@ -5,8 +5,8 @@ from datetime import date
 from os import path
 from time import sleep
 
-COM_port_name = '/dev/ttyACM0'
-#COM_port_name = '/dev/ttyUSB0'  #Sur le raspberry
+#COM_port_name = '/dev/ttyACM0'
+COM_port_name = '/dev/ttyUSB0'  #Sur le raspberry
 
 # Load the shared library containing the cal_crc_half function
 lib = ctypes.cdll.LoadLibrary("./calcul_CRC.so")
@@ -28,7 +28,7 @@ def calculate_crc(string):
     c_string = ctypes.create_string_buffer(string.encode())
 
     # Call the cal_crc_half function and return the result
-    return lib.cal_crc_half(c_string, len(string))  #TODO : essayer avec d'autres valeurs de len (en décalant de +/- 1)
+    return lib.cal_crc_half(c_string, len(string)+1)  #TODO : essayer avec d'autres valeurs de len (en décalant de +/- 1)
 
 def envoyerCommande(commande):
     """Envoie la commande (en ajoutant la parenthèse, le CRC et le retour à la ligne.
@@ -46,7 +46,7 @@ def envoyerCommande(commande):
         #for b in bytes_crc:                 #Si jamais on est obligé d'envoyer chaque bit séparément, on peut faire comme ça.
         #    s.write(b)
         #s.write(crc)
-        s.write(bytes('\n', 'utf-8'))
+        s.write(bytes('\r', 'utf-8'))
         sleep(0.5)
         retour = s.readline()
         log("commande : " + commande + "; resultat = " + str(retour) + ";")
@@ -56,6 +56,12 @@ def requete_statuts():
     reponse = envoyerCommande("QFLAG")
     return reponse
 
-r = requete_statuts()
+def request_rating_informations():
+    reponse = envoyerCommande("QPIRI")
+    return reponse
+
+#r = requete_statuts()
+r = request_rating_informations()
 print(r)
 print("fin d'exécution")
+
