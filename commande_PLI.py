@@ -5,8 +5,8 @@ from datetime import date
 from os import path
 from time import sleep
 
-COM_port_name = '/dev/ttyACM0'
-#COM_port_name = '/dev/ttyUSB0'  #Sur le raspberry
+#COM_port_name = '/dev/ttyACM0'
+COM_port_name = '/dev/ttyUSB0'  #Sur le raspberry
 
 # Load the shared library containing the cal_crc_half function
 lib = ctypes.cdll.LoadLibrary("./calcul_CRC.so")
@@ -123,7 +123,8 @@ def request_general_status_parameter():
     return reponse, dictionnaire
 
 #r = requete_statuts()
-r = request_rating_informations()
+#r = request_rating_informations()
+r = request_general_status_parameter()
 print(r)
 print("fin d'exécution")
 
