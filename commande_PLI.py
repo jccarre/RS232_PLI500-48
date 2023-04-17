@@ -35,8 +35,8 @@ def envoyerCommande(commande):
     Renvoie La réponse de la part du PLI"""
     with serial.Serial(COM_port_name, baudrate=2400, timeout=1) as s:
         sleep(2)#nécessaire pour laisser le temps à la communication série de s'ouvrir.
-        print(s.name + ' is open…')
-        print("Paramètres de la communication : ", s.get_settings())  # Grace a ces 3 lignes lorsque le Port est ouvert c’est indiqué dans le LOG
+        #print(s.name + ' is open…')
+        #print("Paramètres de la communication : ", s.get_settings())  # Grace a ces 3 lignes lorsque le Port est ouvert c’est indiqué dans le LOG
         crc = calculate_crc(commande)
         print("CRC : ", crc)
         s.write(bytes(commande, 'utf-8'))
@@ -45,8 +45,8 @@ def envoyerCommande(commande):
         s.write(values)
         s.write(bytes('\r', 'utf-8'))
         sleep(0.5)
-        retour = s.readline()
-        log("commande : " + commande + "; resultat = " + str(retour) + ";")
+        retour = str(s.readline())[3:-5] #les premiers bits sont simplement la guillemet et le caractère "b" pour dire que c'est en binaire. Les derniers bits sont le crc et le retour à la ligne. On enlève tout ça.
+        #log("commande : " + commande + "; resultat = " + retour + ";")
         return retour
     
 def requete_statuts():
@@ -55,8 +55,7 @@ def requete_statuts():
 
 def request_rating_informations():
     reponse = envoyerCommande("QPIRI")
-    reponse = str(reponse)
-    data = reponse[3:-5].split(" ")
+    data = reponse.split(" ")
     dictionnaire = {}
     noms = ["Grid rating voltage",
             "Grid rating current",
@@ -92,8 +91,7 @@ def request_rating_informations():
 
 def request_general_status_parameter():
     reponse = envoyerCommande("QPIGS")
-    reponse = str(reponse)
-    data = reponse[3:-5].split(" ")
+    data = reponse.split(" ")
     dictionnaire = {}
     noms = ["Grid voltage",
             "Grid frequency",
@@ -122,9 +120,24 @@ def request_general_status_parameter():
         print(noms[i] + " : " + data[i] + " " + units[i])
     return reponse, dictionnaire
 
-#r = requete_statuts()
-#r = request_rating_informations()
-r = request_general_status_parameter()
-print(r)
-print("fin d'exécution")
+def request_mode():
+    return envoyerCommande("QMOD")
+
+
+def request_warning_and_faults():
+    return envoyerCommande("QPIWS")
+
+for i in range(10):
+    print("Passage n°" + str(i))
+    statuts = requete_statuts()
+    #r = request_rating_informations()
+    status_param = request_general_status_parameter()
+    mode = request_mode()
+    warnings_faults = request_warning_and_faults()
+    msg = statuts + status_param[0] + mode + warnings_faults
+    log(msg, "log")
+    sleep(10)
+
+#print(r)
+#print("fin d'exécution")
 
