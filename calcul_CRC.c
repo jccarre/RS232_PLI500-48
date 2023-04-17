@@ -8,7 +8,7 @@ INT16U cal_crc_half(INT8U *pin, INT8U len);
 
 int main()
 {
-    unsigned char str[] = "^P003ID";
+    unsigned char str[] = "(NAK";
     unsigned short crc;
     crc = cal_crc_half(str, 8);
     // gives crc = 0xAB6D

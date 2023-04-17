@@ -5,8 +5,8 @@ from datetime import date
 from os import path
 from time import sleep
 
-#COM_port_name = '/dev/ttyACM0'
-COM_port_name = '/dev/ttyUSB0'  #Sur le raspberry
+COM_port_name = '/dev/ttyACM0'
+#COM_port_name = '/dev/ttyUSB0'  #Sur le raspberry
 
 # Load the shared library containing the cal_crc_half function
 lib = ctypes.cdll.LoadLibrary("./calcul_CRC.so")
@@ -28,7 +28,7 @@ def calculate_crc(string):
     c_string = ctypes.create_string_buffer(string.encode())
 
     # Call the cal_crc_half function and return the result
-    return lib.cal_crc_half(c_string, len(string)+1)  #TODO : essayer avec d'autres valeurs de len (en décalant de +/- 1)
+    return lib.cal_crc_half(c_string, len(string)+1)
 
 def envoyerCommande(commande):
     """Envoie la commande (en ajoutant la parenthèse, le CRC et le retour à la ligne.
@@ -43,9 +43,6 @@ def envoyerCommande(commande):
         bytes_crc = crc.to_bytes(2, 'big')  #La méthode de calcul du crc proposé par Steca renvoie un CRC sur 16 bit.
         values = bytearray(bytes_crc)
         s.write(values)
-        #for b in bytes_crc:                 #Si jamais on est obligé d'envoyer chaque bit séparément, on peut faire comme ça.
-        #    s.write(b)
-        #s.write(crc)
         s.write(bytes('\r', 'utf-8'))
         sleep(0.5)
         retour = s.readline()
@@ -54,10 +51,18 @@ def envoyerCommande(commande):
     
 def requete_statuts():
     reponse = envoyerCommande("QFLAG")
-    return reponse
+    return str(reponse)
 
 def request_rating_informations():
     reponse = envoyerCommande("QPIRI")
+    reponse = str(reponse)
+    data = reponse[1:-3].split(" ")
+    dictionnaire = {}
+    noms = ["Grid rating voltage", "Grid rating current", "AC output rating voltage", "AC output rating frequency", "AC output rating current", "AC output rating apparent power", "AC output rating active power", "Battery rating voltage", "Battery re-charge voltage", "Battery under voltage", "Battery bulk voltage", "Battery float voltage", "Battery type", "Current max AC charging", "Current max charging current", "Input voltage range", "Output source priority", "Charger source priority", "Parallel max number", "Machine type", "Topology", "Output mode", "Battery re-discharge voltage", "PV 'OK' condition for parallel devices", "PV power balance", "Max charging time at boost stage"]
+    units = ["V", "A", "V", "Hz", "A", "VA", "W", "V", "V", "V", "V", "V", "", "A", "A", "", "", "", "", "", "", "", "", "", "", ""]
+    for i in range(len(data)):
+        dictionnaire[noms[i]] = (data[i], [units[i]])
+        print(noms[i] + " : " + data[i] + " " + units[i])
     return reponse
 
 #r = requete_statuts()
