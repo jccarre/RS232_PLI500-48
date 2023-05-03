@@ -1,5 +1,7 @@
-import ctypes  # Pour l'appel de la fonction C permettant de calculer le CRC des messages.
-import serial  # Importation de la bibliothèque « pySerial »
+import ctypes #Pour l'appel de la fonction C permettant de calculer le CRC des messages.
+import serial #Importation de la bibliothèque « pySerial »
+import serial.tools.list_ports
+
 from datetime import datetime
 from datetime import date
 from os import path
@@ -7,11 +9,19 @@ from time import sleep
 from serial.tools.list_ports import comports as list_COM_ports
 from random import randint
 
-COM_port_name = ""
+
+#Ajout de Vincent pour trouver le port com, normalement ça doit être celui autre que /dev/ttyAMAO, soit ttyUSB0 ou bien ACM0
+def find_serial_port():
+    for port in serial.tools.list_ports.comports():
+        if "/dev/ttyAMAO" not in port.device:
+            return port.device
+    return '/dev/ttyACM0'
+
 #COM_port_name = '/dev/ttyACM0'
-# COM_port_name = '/dev/ttyUSB0'  # Sur le raspberry
+COM_port_name = find_serial_port() 
 
 current_output_priority_mode = -1  # entre 0 et 3. Inconnu par défaut (d'où le -1)
+
 
 
 # Load the shared library containing the cal_crc_half function
