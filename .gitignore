@@ -53,5 +53,7 @@ Mkfile.old
 dkms.conf
 
 log
+__pycache__
+error_log
 testSerial.py
 simulateur_PLI.ino
