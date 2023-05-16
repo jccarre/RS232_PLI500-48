@@ -1,36 +1,24 @@
-import ctypes #Pour l'appel de la fonction C permettant de calculer le CRC des messages.
-import serial #Importation de la bibliothèque « pySerial »
-import serial.tools.list_ports
+import ctypes  # Pour l'appel de la fonction C permettant de calculer le CRC des messages.
+import os.path
+import struct
+
+import serial  # Importation de la bibliothèque « pySerial »
 
 from datetime import datetime
 from datetime import date
 from os import path
 from time import sleep
 from serial.tools.list_ports import comports as list_COM_ports
-from random import randint
+from CustomException import *
 
-
-#Ajout de Vincent pour trouver le port com, normalement ça doit être celui autre que /dev/ttyAMAO, soit ttyUSB0 ou bien ACM0
-def find_serial_port():
-    for port in serial.tools.list_ports.comports():
-        if "/dev/ttyAMAO" not in port.device:
-            return port.device
-    return '/dev/ttyACM0'
-
-#COM_port_name = '/dev/ttyACM0'
-COM_port_name = find_serial_port() 
+COM_port_name = '' #Le nom du port COM est déterminé dynamiquement, même s'il est modifié en cours d'exécution. Pas besoin de l'initialiser.
 
 current_output_priority_mode = -1  # entre 0 et 3. Inconnu par défaut (d'où le -1)
 
 
-
-# Load the shared library containing the cal_crc_half function
-# lib = ctypes.cdll.LoadLibrary("./calcul_CRC.so")
-# Define the argument and return types of the cal_crc_half function
-# lib.cal_crc_half.argtypes = (ctypes.POINTER(ctypes.c_char), ctypes.c_uint)
-# lib.cal_crc_half.restype = ctypes.c_uint16
-
 def log(message, dossier="log"):
+    if not os.path.exists(dossier):
+        os.makedirs(dossier)
     nom_fichier = date.today().strftime("%Y-%m-%d")
     nom_fichier = path.join(dossier, nom_fichier)
     with open(nom_fichier, 'a', encoding='utf-8') as f:
@@ -67,6 +55,13 @@ def calculate_crc(msg):
 
 
 # Ceci était l'ancienne façon de calculer le CRC, qui faisait appel au code C. Désormais, cette fonction a été écrite en python.
+#
+# Load the shared library containing the cal_crc_half function
+# lib = ctypes.cdll.LoadLibrary("./calcul_CRC.so")
+# Define the argument and return types of the cal_crc_half function
+# lib.cal_crc_half.argtypes = (ctypes.POINTER(ctypes.c_char), ctypes.c_uint)
+# lib.cal_crc_half.restype = ctypes.c_uint16
+#
 # def calculate_crc(string):
 #    # Convert the Python string to a C-style char array
 #    c_string = ctypes.create_string_buffer(string.encode())
@@ -75,8 +70,8 @@ def calculate_crc(msg):
 #    return lib.cal_crc_half(c_string, len(string)+1)
 
 def envoyerCommande(commande, crc=False):
-    """Envoie la commande (en ajoutant la parenthèse, le CRC et le retour à la ligne.
-    Renvoie La réponse de la part du PLI"""
+    """Envoie la commande (en ajoutant la parenthèse, le CRC et le retour à la ligne).
+    Renvoie La réponse de la part du PLI, si elle est conforme, sinon, lève une exception"""
     with serial.Serial(COM_port_name, baudrate=2400, timeout=1) as s:
         sleep(2)  # nécessaire pour laisser le temps à la communication série de s'ouvrir.
         #  print(s.name + ' is open…')
@@ -91,10 +86,21 @@ def envoyerCommande(commande, crc=False):
         s.write(bytes('\r', 'utf-8'))
         sleep(0.5)
         retour = s.readline()
-        retour = str(retour)[3:-5]  # les premiers bits sont simplement la guillemet et le caractère "b" pour dire
-        # que c'est en binaire. Les derniers bits sont le crc et le retour à la ligne.
-        # log("commande : " + commande + "; resultat = " + retour + ";")
-        return retour
+        crc_bytes = retour[-3:-1]
+        crc_recu = struct.unpack('>H', crc_bytes)[0]
+        retour = retour[0:-3]
+
+        retour_decode = retour.decode('utf-8')
+        crc_calc = calculate_crc(retour_decode)
+        if retour_decode.startswith("("):
+            retour_decode = retour_decode[1:]
+        else:
+            raise IntegrityException("Missing '(' character at beginning of message")
+        if "NAK" in retour_decode:
+            raise IntegrityException("PLI returned 'NAK'")
+        if crc_recu != crc_calc:
+            raise CRCException("CRC non conforme lors de la réception")
+        return retour_decode
 
 
 def requete_statuts():
@@ -198,6 +204,7 @@ def set_output_priority(requested_mode):
     else:
         raise ValueError("Le mode doit être compris entre 0 et 4, sous forme d'un entier.")
 
+
 def detect_COM_port():
     global COM_port_name
     com_ports = list(list_COM_ports())
@@ -207,17 +214,14 @@ def detect_COM_port():
             old_com_port_name = COM_port_name
             COM_port_name = com.device
             mode = request_mode()
-            print("mode : ", mode)
             if mode != "":
-                log("Nouveau port COM sélectionné : " + COM_port_name, "log")
+                log("Nouveau port COM sélectionné : " + COM_port_name, "error_log")
                 return
             else:
                 old_com_port_name = COM_port_name
         except Exception as e:
             COM_port_name = old_com_port_name
 
-
-#detect_COM_port()
 
 while True:
     try:
@@ -230,9 +234,10 @@ while True:
         msg = status_param[0] + ";" + mode + ";" + warnings_faults
         log(msg, "log")
         print(msg)
+    except CRCException as e:
+        log(str(e), "error_log")
+        print(str(e))
     except Exception as e:
-        detect_COM_port() #
-        log(str(e), "log")
-
-
-
+        print(str(e))
+        detect_COM_port()  #
+        log(str(e), "error_log")
