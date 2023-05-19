@@ -1,12 +1,9 @@
-import ctypes  # Pour l'appel de la fonction C permettant de calculer le CRC des messages.
-import os.path
+from CRC import calculate_crc
+
 import struct
 
 import serial  # Importation de la bibliothèque « pySerial »
-
-from datetime import datetime
-from datetime import date
-from os import path
+from Log import logCSV, logText
 from time import sleep
 from serial.tools.list_ports import comports as list_COM_ports
 from CustomException import *
@@ -16,67 +13,12 @@ COM_port_name = '' #Le nom du port COM est déterminé dynamiquement, même s'il
 current_output_priority_mode = -1  # entre 0 et 3. Inconnu par défaut (d'où le -1)
 
 
-def log(message, dossier="log"):
-    if not os.path.exists(dossier):
-        os.makedirs(dossier)
-    nom_fichier = date.today().strftime("%Y-%m-%d")
-    nom_fichier = path.join(dossier, nom_fichier)
-    with open(nom_fichier, 'a', encoding='utf-8') as f:
-        now = datetime.now()
-        dt_string = now.strftime("%H:%M:%S")
-        f.write(dt_string + ";" + message + "\n")
-
-
-def calculate_crc(msg):
-    crc_ta = [
-        0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7,
-        0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef
-    ]
-    crc = 0
-    for c in msg.encode():
-        da = (crc >> 8) >> 4
-        crc = (crc << 4) & 0b000000001111111111111111
-        b = c >> 4
-        d = da ^ (c >> 4)
-        crc ^= crc_ta[da ^ (c >> 4)]
-        da = (crc >> 8) >> 4
-        crc = (crc << 4) & 0b000000001111111111111111
-        e = (c & 0x0f)
-        f = da ^ (c & 0x0f)
-        crc ^= crc_ta[da ^ (c & 0x0f)]
-    bCRCLow = crc & 0xff
-    bCRCHign = (crc >> 8) & 0xff
-    if bCRCLow == 0x28 or bCRCLow == 0x0d or bCRCLow == 0x0a:
-        bCRCLow += 1
-    if bCRCHign == 0x28 or bCRCHign == 0x0d or bCRCHign == 0x0a:
-        bCRCHign += 1
-    crc = (bCRCHign << 8) | bCRCLow
-    return crc
-
-
-# Ceci était l'ancienne façon de calculer le CRC, qui faisait appel au code C. Désormais, cette fonction a été écrite en python.
-#
-# Load the shared library containing the cal_crc_half function
-# lib = ctypes.cdll.LoadLibrary("./calcul_CRC.so")
-# Define the argument and return types of the cal_crc_half function
-# lib.cal_crc_half.argtypes = (ctypes.POINTER(ctypes.c_char), ctypes.c_uint)
-# lib.cal_crc_half.restype = ctypes.c_uint16
-#
-# def calculate_crc(string):
-#    # Convert the Python string to a C-style char array
-#    c_string = ctypes.create_string_buffer(string.encode())
-#
-#    # Call the cal_crc_half function and return the result
-#    return lib.cal_crc_half(c_string, len(string)+1)
-
-def envoyerCommande(commande, crc=False):
+def envoyerCommande(commande, crc=0):
     """Envoie la commande (en ajoutant la parenthèse, le CRC et le retour à la ligne).
     Renvoie La réponse de la part du PLI, si elle est conforme, sinon, lève une exception"""
     with serial.Serial(COM_port_name, baudrate=2400, timeout=1) as s:
-        sleep(2)  # nécessaire pour laisser le temps à la communication série de s'ouvrir.
-        #  print(s.name + ' is open…')
-        #  print("Paramètres de la communication : ", s.get_settings())  # Grace a ces 3 lignes lorsque le Port est ouvert c’est indiqué dans le LOG
-        if not crc:  # Pour les commandes classiques, on connait déjà le CRC car il ne change pas. Donc pas besoin de le recalculer à chaque fois.
+        sleep(0.5)  # nécessaire pour laisser le temps à la communication série de s'ouvrir.
+        if not crc:  # No need to compute again the CRC when it is already known
             crc = calculate_crc(commande)
             print("CRC : ", crc)
         s.write(bytes(commande, 'utf-8'))
@@ -89,7 +31,6 @@ def envoyerCommande(commande, crc=False):
         crc_bytes = retour[-3:-1]
         crc_recu = struct.unpack('>H', crc_bytes)[0]
         retour = retour[0:-3]
-
         retour_decode = retour.decode('utf-8')
         crc_calc = calculate_crc(retour_decode)
         if retour_decode.startswith("("):
@@ -145,10 +86,9 @@ def request_rating_informations():
     return reponse, dictionnaire
 
 
-def request_general_status_parameter():
+def request_general_status_parameter(mode='dict'):
     reponse = envoyerCommande("QPIGS", 47017)
-    # data = reponse.split(" ")
-    dictionnaire = {}
+    data = reponse.split(" ")
     noms = ["Grid voltage",
             "Grid frequency",
             "AC output voltage",
@@ -170,19 +110,91 @@ def request_general_status_parameter():
             "EEPROM version",
             "PV charging power",
             "Device status"]
-    # units = ["V", "Hz", "V", "Hz", "VA", "W", "%", "V", "V", "A", "%", "°C", "A", "V", "V", "A", "", "10mV", "", "W", ""]
-    # for i in range(len(data)):
-    #    dictionnaire[noms[i]] = (data[i], [units[i]])
-    #    print(noms[i] + " : " + data[i] + " " + units[i])
-    return reponse, dictionnaire
+    units = ["V", "Hz", "V", "Hz", "VA", "W", "%", "V", "V", "A", "%", "°C", "A", "V", "V", "A", "", "10mV", "", "W", ""]
+    dictionnaire = {}
+    for i in range(len(data)):
+        dictionnaire[noms[i] + " (" + units[i] + ")"] = data[i]
+
+    if mode == 'dict':
+        return dictionnaire
+    else:
+        return reponse
 
 
-def request_mode():
-    return envoyerCommande("QMOD", 18881)
+def request_mode(output='dict'):
+    text = envoyerCommande("QMOD", 18881)
 
+    modes_PLI = {'P': 'Power on',
+                 'S': 'Stand By',
+                 'L': 'AC source',
+                 'B': 'Battery',
+                 'F': 'Fault',
+                 'H': 'Power saving'}
+    if output == 'dict':
+        return {'mode': modes_PLI[text]}
+    else:
+        return text
 
-def request_warning_and_faults():
-    return envoyerCommande("QPIWS", 46298)
+def request_warning_and_faults(mode='dict'):
+    """
+    Requests the list of errors status.
+    Parameter mode :
+       - if mode='dict' (default value) : returns a dictionary containing the name of the error as key and its status as value.
+         If no error are present, simply returns 00000000000000000000000000000000
+       - if mode = 'text' : returns the raw data sent by the PLI.
+    """
+    errors = [("Unknown",                        "Unknown error"),
+              ("Inverter",                       "Fault"),
+              ("Bus Over",                       "Fault"),
+              ("Bus Under",                      "Fault"),
+              ("Bus Soft Fail",                  "Fault"),
+              ("LINE_FAIL",                      "Warning"),
+              ("OPVShort",                       "Warning"),
+              ("Inverter voltage too low",       "Fault"),
+              ("Inverter voltage too high",      "Fault"),
+              ("Over temperature",               "Warning"),
+              ("Fan locked",                     "Warning"),
+              ("Battery voltage high",           "Warning"),
+              ("Battery voltage low alarm",      "Warning"),
+              ("Overcharge",                     "Warning"),
+              ("Battery under shutdown voltage", "Warning"),
+              ("Battery derating",               "Warning"),
+              ("Over load",                      "Warning"),
+              ("EEPROM Fault",                   "Warning"),
+              ("Inverter over-current",          "Fault"),
+              ("Inverter Soft-Start fail",       "Fault"),
+              ("Self-Test fail",                 "Fault"),
+              ("AC output DC voltage too high",  "Fault"),
+              ("Battery disconnected",           "Fault"),
+              ("Current sensor fail",            "Fault"),
+              ("Battery short-circuit",          "Fault"),
+              ("Power limit",                    "Warning"),
+              ("PV voltage high",                "Warning"),
+              ("MPPT overload fault",            "Warning"),
+              ("MPPT overload",                  "Warning"),
+              ("Battery too low to charge",      "Warning"),
+              ("Unknown",                        "Unknown error"),
+              ("Unknown",                        "Unknown error")]
+    text = envoyerCommande("QPIWS", 46298)
+    i = 0
+    inverter_fault = (text[0] == "1")
+    faults_warnings = {}
+    for bit in text:
+        if bit == "1":
+            if i in [9, 10, 11, 16]:
+                if inverter_fault:
+                    faults_warnings[errors[i][0]] = " Fault"
+                else:
+                    faults_warnings[errors[i][0]] = " Warning"
+            else:
+                faults_warnings[errors[i][0]] = errors[i][1]
+
+        i += 1
+    if mode == 'dict':
+        faults_warnings.update({'errors code': text})
+        return faults_warnings
+    else:
+        return text
 
 
 def set_output_priority(requested_mode):
@@ -193,14 +205,14 @@ def set_output_priority(requested_mode):
     global current_output_priority_mode
     if mode in [0, 1, 2, 3]:
         if current_output_priority_mode != requested_mode:
-            commande = "PCP" + "0" + str(mode)
-            res = envoyerCommande()
-            if "ACK" in res:  # Le PLI a confirmé qu'il a accepté la commande
+            command = "PCP" + "0" + str(mode)
+            res = envoyerCommande(command)
+            if "ACK" in res:  # PLI has confirmed it accepted the command.
                 current_output_priority_mode = requested_mode
             else:
-                message = "Refus de passer en mode 0" + str(requested_mode) + " suite à la commande '" + commande
+                message = "Refus de passer en mode 0" + str(requested_mode) + " suite à la commande '" + command
                 message += "'. Réponse du PLI : " + res
-                log(message, "log")
+                logText(message, "log")
     else:
         raise ValueError("Le mode doit être compris entre 0 et 4, sous forme d'un entier.")
 
@@ -215,7 +227,7 @@ def detect_COM_port():
             COM_port_name = com.device
             mode = request_mode()
             if mode != "":
-                log("Nouveau port COM sélectionné : " + COM_port_name, "error_log")
+                logText("Nouveau port COM sélectionné : " + COM_port_name, "error_log")
                 return
             else:
                 old_com_port_name = COM_port_name
@@ -231,13 +243,11 @@ while True:
         status_param = request_general_status_parameter()
         mode = request_mode()
         warnings_faults = request_warning_and_faults()
-        msg = status_param[0] + ";" + mode + ";" + warnings_faults
-        log(msg, "log")
-        print(msg)
+        logCSV(status_param, mode, warnings_faults)
     except CRCException as e:
-        log(str(e), "error_log")
+        logText(str(e), "error_log")
         print(str(e))
     except Exception as e:
         print(str(e))
         detect_COM_port()  #
-        log(str(e), "error_log")
+        logText(str(e), "error_log")
