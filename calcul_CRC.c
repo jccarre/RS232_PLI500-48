@@ -1,3 +1,7 @@
+/*
+This file is no longer used since the CRC computation is now directly made inside the python script. It has been kept so that anyone willing to develop using C code can use it.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 
