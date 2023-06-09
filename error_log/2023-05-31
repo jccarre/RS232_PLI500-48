@@ -1,0 +1,8 @@
+time15:43:22;Nouveau port COM sélectionné : /dev/ttyUSB0
+15:43:22;[Errno 2] could not open port : [Errno 2] No such file or directory: ''
+16:13:26;Nouveau port COM sélectionné : /dev/ttyUSB0
+16:13:26;PLI returned 'NAK'
+16:56:52;Nouveau port COM sélectionné : /dev/ttyUSB0
+16:56:52;PLI returned 'NAK'
+17:13:40;Nouveau port COM sélectionné : /dev/ttyUSB0
+17:13:40;PLI returned 'NAK'

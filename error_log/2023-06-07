@@ -1,0 +1,18 @@
+time02:00:29;Nouveau port COM sélectionné : /dev/ttyUSB0
+02:00:29;PLI returned 'NAK'
+05:01:08;unpack requires a buffer of 2 bytes
+06:32:37;unpack requires a buffer of 2 bytes
+06:49:24;Nouveau port COM sélectionné : /dev/ttyUSB0
+06:49:24;PLI returned 'NAK'
+08:43:45;unpack requires a buffer of 2 bytes
+09:17:17;Nouveau port COM sélectionné : /dev/ttyUSB0
+09:17:17;PLI returned 'NAK'
+09:22:39;unpack requires a buffer of 2 bytes
+09:44:02;unpack requires a buffer of 2 bytes
+09:46:21;Nouveau port COM sélectionné : /dev/ttyUSB0
+09:46:21;PLI returned 'NAK'
+10:09:12;Nouveau port COM sélectionné : /dev/ttyUSB0
+10:09:12;PLI returned 'NAK'
+10:45:04;Nouveau port COM sélectionné : /dev/ttyUSB0
+10:45:04;PLI returned 'NAK'
+13:57:04;unpack requires a buffer of 2 bytes

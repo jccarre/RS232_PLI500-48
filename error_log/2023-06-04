@@ -1,0 +1,35 @@
+time02:27:42;Nouveau port COM sélectionné : /dev/ttyUSB0
+02:27:42;PLI returned 'NAK'
+02:47:33;Nouveau port COM sélectionné : /dev/ttyUSB0
+02:47:33;PLI returned 'NAK'
+05:02:26;Nouveau port COM sélectionné : /dev/ttyUSB0
+05:02:26;PLI returned 'NAK'
+05:07:00;Nouveau port COM sélectionné : /dev/ttyUSB0
+05:07:00;PLI returned 'NAK'
+05:20:42;Nouveau port COM sélectionné : /dev/ttyUSB0
+05:20:42;PLI returned 'NAK'
+05:52:45;Nouveau port COM sélectionné : /dev/ttyUSB0
+05:52:45;PLI returned 'NAK'
+06:15:37;Nouveau port COM sélectionné : /dev/ttyUSB0
+06:15:37;PLI returned 'NAK'
+07:05:52;Nouveau port COM sélectionné : /dev/ttyUSB0
+07:05:52;PLI returned 'NAK'
+07:42:29;Nouveau port COM sélectionné : /dev/ttyUSB0
+07:42:29;PLI returned 'NAK'
+08:24:24;unpack requires a buffer of 2 bytes
+08:59:29;Nouveau port COM sélectionné : /dev/ttyUSB0
+08:59:29;PLI returned 'NAK'
+09:33:46;unpack requires a buffer of 2 bytes
+09:58:10;Nouveau port COM sélectionné : /dev/ttyUSB0
+09:58:10;PLI returned 'NAK'
+10:55:19;Nouveau port COM sélectionné : /dev/ttyUSB0
+10:55:19;PLI returned 'NAK'
+11:36:30;Nouveau port COM sélectionné : /dev/ttyUSB0
+11:36:30;PLI returned 'NAK'
+12:29:05;Nouveau port COM sélectionné : /dev/ttyUSB0
+12:29:05;PLI returned 'NAK'
+12:40:31;unpack requires a buffer of 2 bytes
+12:45:09;Nouveau port COM sélectionné : /dev/ttyUSB0
+12:45:09;PLI returned 'NAK'
+18:17:39;Nouveau port COM sélectionné : /dev/ttyUSB0
+18:17:39;[Errno 2] could not open port : [Errno 2] No such file or directory: ''
