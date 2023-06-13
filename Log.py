@@ -1,7 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from datetime import date
 from os import path, makedirs, remove, rename
 from csv import DictWriter as csvDictWriter
+from csv import DictReader as csvDictReader
+from CustomException import MissingDataException
 
 delimiter = ";"
 
@@ -22,13 +24,34 @@ def logCSV(*dictionaries, dossier="log"):
         final_dictionary.update(d)
 
     now = datetime.now()
-    final_dictionary.update({'time': now.strftime("%H:%M:%S")})
+    final_dictionary.update({'time': now.strftime("%H:%M:%S.%f")})
 
     fieldnames = update_header(final_dictionary, nom_fichier)
     with open(nom_fichier, 'a', encoding='utf-8') as f:
-        writer = csvDictWriter(f, fieldnames=fieldnames)
+        writer = csvDictWriter(f, fieldnames=fieldnames, delimiter=";")
         writer.writerow(final_dictionary)
 
+def readLastCSV(fieldName, nbRows):
+    """Reads the last nbRows values of the corresponding column in the data log file and returns a dictionnary with the
+    datetime as key and the value requested as value. If the today log file has less than nbRows values, (i.e. if it is
+    very early after midnight), then the last data of the previous day will be added."""
+    nom_fichier_aujourdhui = date.today().strftime("%Y-%m-%d")
+    nom_fichier_aujourdhui = path.join("log", nom_fichier_aujourdhui)
+    nb_lines = 0
+    with open(nom_fichier_aujourdhui, 'r', encoding='utf-8', newline='') as csvfile:
+        nb_lines = len(csvfile.readlines())
+    with open(nom_fichier_aujourdhui, 'r', encoding='utf-8', newline='') as csvfile:
+        reader = csvDictReader(csvfile, delimiter=";")
+        dictionnaire = {}
+        i = 0
+        for row in reader:
+            if i > nb_lines - nbRows:
+                dictionnaire[row['time']] = row[fieldName]
+            i+=1
+        if(len(dictionnaire) < nbRows):
+            raise MissingDataException("Dans la fonction readLastCSV. Nombre de données demandées : " + str(nbRows) + " Nombre de données présentes : " + str(len(dictionnaire)))
+
+        return dictionnaire
 
 def update_header(dictionnaire, nom_fichier):
     """
